@@ -1,0 +1,138 @@
+version: '3'
+
+
+vars:
+  LINUX_VERSION: 18.04
+  SQLPACKAGE_VERSION: 15.0.4769.1
+  SQLPACKAGE_URL: https://download.microsoft.com/download/c/2/7/c27d7354-36a9-4efb-9d76-cd828eff7a2b/sqlpackage-linux-x64-en-US-15.0.4769.1.zip
+  DOCKERIZE_VERSION: v0.6.0
+  IMAGE_VERSION: 20.05.09
+  IMAGE_NAME: chrisgarrett/sqlpackage
+
+
+silent: true
+
+
+tasks:
+
+  default:
+    cmds:
+      - task -l
+
+  build:
+    desc: Build the image
+    deps: [prep]
+    cmds:
+      - docker build --rm=true -t {{.IMAGE_NAME}}:{{.IMAGE_VERSION}} .
+
+  run:
+    desc: Run the image once 
+    cmds:
+      - docker run --rm -it {{.IMAGE_NAME}}:{{.IMAGE_VERSION}} sqlpackage
+
+  sh:
+    desc: Launch a shell interactively
+    cmds:
+      - docker run --rm -it {{.IMAGE_NAME}}:{{.IMAGE_VERSION}} bash
+
+  shroot:
+    desc: Launch a shell interactively as root
+    cmds:
+      - docker run --rm -it -u root {{.IMAGE_NAME}}:{{.IMAGE_VERSION}} bash
+
+  prep:
+    desc: Generates Dockerfile/Readme for this repo
+    cmds:
+      - echo "{{.DOCKER_TEMPLATE}}" > Dockerfile
+      - echo "{{.README_TEMPLATE}}" > README.md
+    sources:
+      - ./Taskfile.yml
+    generates:
+      - Dockerfile
+      - README.md
+    method: checksum      
+    vars:
+      DOCKER_TEMPLATE: |
+        FROM ubuntu:{{.LINUX_VERSION}}
+        MAINTAINER Chris Garrett (https://github.com/chris-garrett/docker-sqlpackage)
+        LABEL description=\"Sqlpackage {{.SQLPACKAGE_VERSION}} Development Image\"
+
+        ARG ACCEPT_EULA=Y
+
+        RUN set -x \\
+          && apt-get update \\
+          && apt-get install -y --no-install-recommends \\
+            ca-certificates \\
+            libunwind8 \\
+            libicu60 \\
+            wget \\
+            unzip \\
+            gnupg2 \\
+            libssl1.0.0 \\
+          && wget -O- https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \\
+          && wget -O- https://packages.microsoft.com/config/ubuntu/{{.LINUX_VERSION}}/prod.list | tee /etc/apt/sources.list.d/msprod.list \\
+          && cat /etc/apt/sources.list.d/msprod.list \\
+          && apt-get update \\
+          && apt-get install -y --no-install-recommends \\
+            mssql-tools \\
+            unixodbc-dev \\
+            libgssapi-krb5-2 \\
+          && mkdir /opt/sqlpackage \\
+          && cd /opt/sqlpackage \\
+          && wget -O sqlpackage.zip {{.SQLPACKAGE_URL}} \\
+          && unzip sqlpackage.zip \\
+          && rm sqlpackage.zip \\
+          && chmod +x sqlpackage \\
+          && ln -s /opt/sqlpackage/sqlpackage /usr/local/bin/sqlpackage \\
+          && wget https://github.com/jwilder/dockerize/releases/download/{{.DOCKERIZE_VERSION}}/dockerize-linux-amd64-{{.DOCKERIZE_VERSION}}.tar.gz \\
+          && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-{{.DOCKERIZE_VERSION}}.tar.gz \\
+          && rm dockerize-linux-amd64-{{.DOCKERIZE_VERSION}}.tar.gz \\
+          && useradd -ms /bin/bash sprout \\
+          && mkdir -p /work/data && chown -R sprout:sprout /work /home/sprout \\
+          && rm -rf /var/lib/apt/lists/*
+
+        USER sprout
+        ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+        ENV PATH=\${PATH}:/opt/mssql-tools/bin
+        WORKDIR /work/data
+        CMD [\"sqlpackage\"]
+      README_TEMPLATE: |
+        # docker-sqlpackage
+
+        * Sqlpackage {{.SQLPACKAGE_VERSION}}
+
+        ## Versions
+        - Ubuntu {{.LINUX_VERSION}} - https://ubuntu.com/
+        - Sqlpackage {{.SQLPACKAGE_VERSION}} - https://docs.microsoft.com/en-us/sql/tools/sqlpackage?view=sql-server-ver15
+        - Dockerize {{.DOCKERIZE_VERSION}} - https://github.com/jwilder/dockerize
+
+        ## Usage
+
+        *nix
+        \`\`\`
+        docker run --rm -it \\
+          -v \${pwd}/data:/work/data \\
+          {{.IMAGE_NAME}}:{{.IMAGE_VERSION}} \\
+          sqlpackage /a:Import /tsn:sqlserver /tdn:\"nwind\" /tu:sa /tp:\"SaPassword\" /sf:\"/work/data/northwind.bacpac\" 
+        \`\`\`
+
+        Windows cmd
+        \`\`\`
+        docker run --rm -it -v %cd%/data:/work/data {{.IMAGE_NAME}}:{{.IMAGE_VERSION}} sqlpackage /a:Import /tsn:sqlserver /tdn:\"nwind\" /tu:sa /tp:\"SaPassword\" /sf:\"/work/data/northwind.bacpac\" 
+        \`\`\`
+
+        Windows Powershell
+        \`\`\`
+        docker run --rm -it -v \${pwd}/data:/work/data {{.IMAGE_NAME}}:{{.IMAGE_VERSION}} sqlpackage /a:Import /tsn:sqlserver /tdn:\"nwind\" /tu:sa /tp:\"SaPassword\" /sf:\"/work/data/northwind.bacpac\" 
+        \`\`\`
+
+        See the example folder for a more complete demonstration of sqlpackage loading northwind into sqlserver. Requires [go-task](https://github.com/go-task/task/releases): 
+
+        \`\`\`
+        cd example
+        task restart log
+        \`\`\`
+
+        ## Credits
+
+        Used Christian Grotheer's work as a launch point https://github.com/grthr/docker-sqlpackage
