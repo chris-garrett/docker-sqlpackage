@@ -3,10 +3,10 @@ version: '3'
 
 vars:
   LINUX_VERSION: 18.04
-  SQLPACKAGE_VERSION: 15.0.4769.1
-  SQLPACKAGE_URL: https://download.microsoft.com/download/c/2/7/c27d7354-36a9-4efb-9d76-cd828eff7a2b/sqlpackage-linux-x64-en-US-15.0.4769.1.zip
+  SQLPACKAGE_VERSION: 15.0.4630.1
+  SQLPACKAGE_URL: https://download.microsoft.com/download/d/e/b/deb7b081-a3dc-47ea-8f2a-48cd8e486036/sqlpackage-linux-x64-en-US-15.0.4630.1.zip
   DOCKERIZE_VERSION: v0.6.0
-  IMAGE_VERSION: 20.05.09
+  IMAGE_VERSION: 18.4
   IMAGE_NAME: chrisgarrett/sqlpackage
 
 

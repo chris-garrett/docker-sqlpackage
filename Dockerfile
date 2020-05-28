@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 MAINTAINER Chris Garrett (https://github.com/chris-garrett/docker-sqlpackage)
-LABEL description="Sqlpackage 15.0.4769.1 Development Image"
+LABEL description="Sqlpackage 15.0.4630.1 Development Image"
 
 ARG ACCEPT_EULA=Y
 
@@ -24,7 +24,7 @@ RUN set -x \
     libgssapi-krb5-2 \
   && mkdir /opt/sqlpackage \
   && cd /opt/sqlpackage \
-  && wget -O sqlpackage.zip https://download.microsoft.com/download/c/2/7/c27d7354-36a9-4efb-9d76-cd828eff7a2b/sqlpackage-linux-x64-en-US-15.0.4769.1.zip \
+  && wget -O sqlpackage.zip https://download.microsoft.com/download/d/e/b/deb7b081-a3dc-47ea-8f2a-48cd8e486036/sqlpackage-linux-x64-en-US-15.0.4630.1.zip \
   && unzip sqlpackage.zip \
   && rm sqlpackage.zip \
   && chmod +x sqlpackage \
