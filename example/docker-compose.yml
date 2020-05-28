@@ -1,0 +1,29 @@
+
+version: '2.4'
+
+services:
+
+  sqlpackage:
+    image: chrisgarrett/sqlpackage:20.05.09
+    command: dockerize
+      -wait tcp://sqlserver:1433
+      -timeout 300s
+      sqlpackage /a:Import /tsn:sqlserver /tdn:"nwind" /tu:sa /tp:"${SA_PASSWORD}" /sf:"/work/data/northwind.bacpac" 
+    environment:
+    - SA_PASSWORD=${SA_PASSWORD}
+    volumes:
+      - ./data:/work/data
+      - ./scripts:/work/scripts
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+    environment:
+    - ACCEPT_EULA=Y
+    - SA_PASSWORD=${SA_PASSWORD}
+    ports:
+    - 1433:1433
+    volumes:
+    - ss_data:/var/opt/mssql
+
+volumes:
+  ss_data:

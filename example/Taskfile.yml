@@ -1,0 +1,45 @@
+version: '3'
+
+vars:
+  PROJECT_NAME: sqlpkg
+
+tasks:
+
+  default:
+    cmds:
+      - task -l
+
+  up:
+    desc: "Bring up solution"
+    dir: example
+    cmds: 
+      - docker-compose -p {{.PROJECT_NAME}} up -d --no-recreate
+
+  down:
+    desc: "Bring down solution"
+    dir: example
+    cmds: 
+      - docker-compose -p {{.PROJECT_NAME}} stop
+      - docker-compose -p {{.PROJECT_NAME}} rm -f
+
+  restart:
+    desc: "Restart solution"
+    dir: example
+    cmds:
+      - task: down
+      - task: up
+
+  log:
+    desc: "Display logs for solution"
+    dir: example
+    cmds: 
+      - docker-compose -p {{.PROJECT_NAME}} logs -f --tail 100
+
+  logs:
+    deps: [log]
+  
+  nuke:
+    desc: "Stop all containers, remove volumes"
+    deps: [down]
+    cmds: 
+      - docker volume rm -f {{.PROJECT_NAME}}_ss_data
